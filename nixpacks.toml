@@ -1,8 +1,5 @@
 [phases.setup]
-nixPkgs = ["...", "postgresql"]
-
-[phases.install]
-cmds = ["cd backend && pip install -r requirements.txt"]
+nixPkgs = ["python311"]
 
 [start]
-cmd = "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+cmd = "cd backend && pip install -r requirements-demo.txt && python demo_server.py"
