@@ -15,9 +15,12 @@ import json
 import sqlite3
 from typing import Dict, List, Optional
 
-# Add current directory to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to Python path to find ml module
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
+# Now import from ml module
 from ml.pricing_optimizer import DynamicPricingEngine, ProductFeatures, OptimizationObjective
 
 # Create FastAPI app
