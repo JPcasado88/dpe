@@ -1,6 +1,5 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install -r backend/requirements-demo.txt"
 
 [deploy]
 startCommand = "cd backend && python demo_server.py"
