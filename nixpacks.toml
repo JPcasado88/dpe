@@ -1,5 +1,8 @@
 [phases.setup]
 nixPkgs = ["python311"]
 
+[phases.install]
+cmds = ["pip install -r backend/requirements-demo.txt"]
+
 [start]
-cmd = "cd backend && pip install -r requirements-demo.txt && python demo_server.py"
+cmd = "cd backend && python demo_server.py"
