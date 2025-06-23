@@ -87,12 +87,22 @@ async def root():
             "No database persistence",
             "No Redis caching"
         ],
-        "endpoints": {
-            "docs": "/docs",
-            "products": "/api/products",
-            "optimize": "/api/optimize/{product_id}",
-            "demo": "/api/demo/impact"
-        }
+        "features": {
+            "docs": "/docs - Interactive API Documentation",
+            "dashboard": "/api/analytics/dashboard - Executive KPI Dashboard",
+            "products": "/api/products - View Demo Products",
+            "optimize": "/api/optimize/{product_id} - ML Price Optimization",
+            "experiments": "/api/experiments - A/B Testing Results",
+            "elasticity": "/api/analytics/elasticity/{product_id} - Price Elasticity Analysis",
+            "competitors": "/api/competitors/{product_id} - Competitor Intelligence",
+            "impact": "/api/demo/impact - Revenue Impact Summary"
+        },
+        "try_these": [
+            "/docs - Best place to start!",
+            "/api/analytics/dashboard - See executive metrics",
+            "/api/experiments - View A/B test results",
+            "/api/demo/impact - See potential revenue lift"
+        ]
     }
 
 @app.get("/health")
@@ -281,6 +291,235 @@ async def simulate_optimization():
         "simulation": "7-day optimization simulation",
         "results": results,
         "total_impact": f"${sum(float(r['revenue_impact'].replace('$', '').replace(',', '')) for r in results):,.0f}"
+    }
+
+# In-memory storage for A/B tests
+DEMO_EXPERIMENTS = {}
+
+@app.get("/api/experiments")
+async def get_experiments():
+    """Get all A/B test experiments"""
+    return {
+        "experiments": [
+            {
+                "id": "EXP-001",
+                "name": "Gaming Headset Holiday Pricing",
+                "product_id": "DEMO-001",
+                "status": "completed",
+                "control_price": 89.99,
+                "variant_price": 79.99,
+                "control_conversions": 245,
+                "variant_conversions": 312,
+                "control_revenue": 22047.55,
+                "variant_revenue": 24956.88,
+                "confidence": 94.5,
+                "winner": "variant",
+                "revenue_lift": "+13.2%",
+                "started_at": "2024-12-15",
+                "ended_at": "2024-12-22"
+            },
+            {
+                "id": "EXP-002", 
+                "name": "USB-C Hub Price Elasticity Test",
+                "product_id": "DEMO-002",
+                "status": "running",
+                "control_price": 49.99,
+                "variant_price": 44.99,
+                "control_conversions": 123,
+                "variant_conversions": 156,
+                "control_revenue": 6148.77,
+                "variant_revenue": 7018.44,
+                "confidence": 78.3,
+                "winner": "too_early",
+                "revenue_lift": "+14.1%",
+                "started_at": "2024-12-20",
+                "ended_at": null
+            }
+        ],
+        "summary": {
+            "active_experiments": 1,
+            "completed_experiments": 1,
+            "total_revenue_lift": "$3,856",
+            "avg_confidence": 86.4
+        }
+    }
+
+@app.post("/api/experiments/create")
+async def create_experiment(
+    product_id: str,
+    variant_price: float,
+    name: str = None
+):
+    """Create a new A/B test experiment"""
+    if product_id not in DEMO_PRODUCTS:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    product = DEMO_PRODUCTS[product_id]
+    exp_id = f"EXP-{len(DEMO_EXPERIMENTS) + 3:03d}"
+    
+    experiment = {
+        "id": exp_id,
+        "name": name or f"{product['name']} Price Test",
+        "product_id": product_id,
+        "status": "running",
+        "control_price": product["current_price"],
+        "variant_price": variant_price,
+        "control_conversions": 0,
+        "variant_conversions": 0,
+        "control_revenue": 0,
+        "variant_revenue": 0,
+        "confidence": 0,
+        "started_at": datetime.utcnow().isoformat()
+    }
+    
+    DEMO_EXPERIMENTS[exp_id] = experiment
+    
+    return {
+        "experiment": experiment,
+        "message": "A/B test created successfully",
+        "estimated_duration": "7-14 days for statistical significance"
+    }
+
+@app.get("/api/analytics/dashboard")
+async def analytics_dashboard():
+    """Get executive dashboard metrics"""
+    return {
+        "kpi_summary": {
+            "total_revenue_mtd": "$1,234,567",
+            "revenue_from_optimization": "$156,789",
+            "revenue_increase_pct": 12.7,
+            "products_optimized": 312,
+            "price_changes_mtd": 1247,
+            "avg_margin": 42.3,
+            "margin_improvement": 2.1
+        },
+        "recent_wins": [
+            {
+                "product": "Wireless Gaming Headset",
+                "action": "Reduced price by $10",
+                "impact": "+$5,200/mo revenue",
+                "confidence": 92
+            },
+            {
+                "product": "Premium USB-C Hub", 
+                "action": "Matched competitor price",
+                "impact": "+$3,100/mo revenue",
+                "confidence": 88
+            },
+            {
+                "product": "Mechanical Keyboard RGB",
+                "action": "Increased price by $10",
+                "impact": "+$2,800/mo revenue", 
+                "confidence": 85
+            }
+        ],
+        "optimization_opportunities": [
+            {
+                "product_id": "DEMO-003",
+                "product_name": "Mechanical Keyboard RGB",
+                "current_price": 129.99,
+                "recommended_price": 119.99,
+                "expected_impact": "+8.5% revenue",
+                "reason": "Competitor undercut by 8%"
+            }
+        ],
+        "system_health": {
+            "api_uptime": "99.98%",
+            "avg_response_time": "45ms",
+            "optimizations_today": 47,
+            "cache_hit_rate": "92%"
+        }
+    }
+
+@app.get("/api/analytics/elasticity/{product_id}")
+async def get_elasticity_analysis(product_id: str):
+    """Get price elasticity analysis for a product"""
+    if product_id not in DEMO_PRODUCTS:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    product = DEMO_PRODUCTS[product_id]
+    
+    # Simulate elasticity curve data
+    price_points = []
+    base_price = product["current_price"]
+    base_demand = 100
+    
+    for i in range(-30, 31, 5):  # -30% to +30% price range
+        price_pct_change = i / 100
+        price = base_price * (1 + price_pct_change)
+        demand_pct_change = price_pct_change * product["elasticity"]
+        demand = base_demand * (1 + demand_pct_change)
+        revenue = price * demand
+        
+        price_points.append({
+            "price": round(price, 2),
+            "demand": round(demand),
+            "revenue": round(revenue, 2),
+            "price_change_pct": i
+        })
+    
+    optimal_point = max(price_points, key=lambda x: x["revenue"])
+    
+    return {
+        "product_id": product_id,
+        "product_name": product["name"],
+        "current_elasticity": product["elasticity"],
+        "interpretation": "Elastic" if abs(product["elasticity"]) > 1 else "Inelastic",
+        "price_sensitivity": "High" if abs(product["elasticity"]) > 2 else "Moderate" if abs(product["elasticity"]) > 1 else "Low",
+        "elasticity_curve": price_points,
+        "optimal_price_point": optimal_point,
+        "recommendations": {
+            "strategy": "Revenue Maximization" if abs(product["elasticity"]) > 1 else "Margin Protection",
+            "price_range": {
+                "min": round(base_price * 0.85, 2),
+                "max": round(base_price * 1.15, 2)
+            },
+            "test_recommendation": "Run A/B test with -10% variant" if product["elasticity"] < -1.5 else "Run A/B test with +5% variant"
+        }
+    }
+
+@app.get("/api/competitors/{product_id}")
+async def get_competitor_analysis(product_id: str):
+    """Get competitor pricing analysis"""
+    if product_id not in DEMO_PRODUCTS:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    product = DEMO_PRODUCTS[product_id]
+    
+    # Simulate competitor data
+    competitors = [
+        {"name": "Amazon", "price": product["competitor_avg"] * 0.92, "in_stock": True, "rating": 4.5},
+        {"name": "BestBuy", "price": product["competitor_avg"] * 1.05, "in_stock": True, "rating": 4.3},
+        {"name": "Walmart", "price": product["competitor_avg"] * 0.88, "in_stock": False, "rating": 4.1},
+        {"name": "Newegg", "price": product["competitor_avg"] * 0.95, "in_stock": True, "rating": 4.4},
+        {"name": "Target", "price": product["competitor_avg"] * 1.02, "in_stock": True, "rating": 4.2}
+    ]
+    
+    our_position = product["current_price"] / product["competitor_avg"]
+    
+    return {
+        "product_id": product_id,
+        "product_name": product["name"],
+        "our_price": product["current_price"],
+        "market_position": {
+            "vs_average": f"{(our_position - 1) * 100:+.1f}%",
+            "percentile": 65 if our_position > 1 else 35,
+            "competitiveness": "Premium" if our_position > 1.1 else "Competitive" if our_position > 0.95 else "Aggressive"
+        },
+        "competitors": competitors,
+        "market_analysis": {
+            "avg_competitor_price": round(product["competitor_avg"], 2),
+            "min_competitor_price": round(min(c["price"] for c in competitors), 2),
+            "max_competitor_price": round(max(c["price"] for c in competitors), 2),
+            "in_stock_competitors": sum(1 for c in competitors if c["in_stock"])
+        },
+        "opportunities": [
+            {
+                "type": "Out of Stock Opportunity" if any(not c["in_stock"] for c in competitors) else "Price Gap Opportunity",
+                "description": "Walmart is out of stock - consider 5% price increase" if any(not c["in_stock"] for c in competitors) else "We're priced above market - consider price match",
+                "potential_impact": "+$1,200/month"
+            }
+        ]
     }
 
 if __name__ == "__main__":
