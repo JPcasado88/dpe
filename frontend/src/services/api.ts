@@ -38,54 +38,54 @@ api.interceptors.response.use(
 
 // Product APIs
 export const productAPI = {
-  getAll: () => api.get('/api/products'),
-  getById: (id: string) => api.get(`/api/products/${id}`),
-  create: (data: any) => api.post('/api/products', data),
-  update: (id: string, data: any) => api.put(`/api/products/${id}`, data),
-  delete: (id: string) => api.delete(`/api/products/${id}`),
-  updatePrice: (id: string, price: number) => api.patch(`/api/products/${id}/price`, { price }),
+  getAll: () => api.get('/api/v1/products'),
+  getById: (id: string) => api.get(`/api/v1/products/${id}`),
+  create: (data: any) => api.post('/api/v1/products', data),
+  update: (id: string, data: any) => api.put(`/api/v1/products/${id}`, data),
+  delete: (id: string) => api.delete(`/api/v1/products/${id}`),
+  updatePrice: (id: string, price: number) => api.patch(`/api/v1/products/${id}/price`, { price }),
 };
 
 // Pricing APIs
 export const pricingAPI = {
   optimize: (productIds: string[], strategy: string) => 
-    api.post('/api/pricing/optimize', { productIds, strategy }),
-  getHistory: (productId: string) => api.get(`/api/pricing/history/${productId}`),
-  getCurrentPrices: () => api.get('/api/pricing/current'),
+    api.post('/api/v1/pricing/optimize', { productIds, strategy }),
+  getHistory: (productId: string) => api.get(`/api/v1/pricing/history/${productId}`),
+  getCurrentPrices: () => api.get('/api/v1/pricing/current'),
 };
 
 // Competitor APIs
 export const competitorAPI = {
-  getAll: () => api.get('/api/competitors'),
-  getById: (id: string) => api.get(`/api/competitors/${id}`),
-  create: (data: any) => api.post('/api/competitors', data),
-  update: (id: string, data: any) => api.put(`/api/competitors/${id}`, data),
-  delete: (id: string) => api.delete(`/api/competitors/${id}`),
-  scrape: (id: string) => api.post(`/api/competitors/${id}/scrape`),
-  getPrices: (competitorId: string) => api.get(`/api/competitors/${competitorId}/prices`),
+  getAll: () => api.get('/api/v1/competitors'),
+  getById: (id: string) => api.get(`/api/v1/competitors/${id}`),
+  create: (data: any) => api.post('/api/v1/competitors', data),
+  update: (id: string, data: any) => api.put(`/api/v1/competitors/${id}`, data),
+  delete: (id: string) => api.delete(`/api/v1/competitors/${id}`),
+  scrape: (id: string) => api.post(`/api/v1/competitors/${id}/scrape`),
+  getPrices: (competitorId: string) => api.get(`/api/v1/competitors/${competitorId}/prices`),
 };
 
 // Experiment APIs
 export const experimentAPI = {
-  getAll: () => api.get('/api/experiments'),
-  getById: (id: string) => api.get(`/api/experiments/${id}`),
-  create: (data: any) => api.post('/api/experiments', data),
-  update: (id: string, data: any) => api.put(`/api/experiments/${id}`, data),
-  delete: (id: string) => api.delete(`/api/experiments/${id}`),
-  start: (id: string) => api.post(`/api/experiments/${id}/start`),
-  pause: (id: string) => api.post(`/api/experiments/${id}/pause`),
-  stop: (id: string) => api.post(`/api/experiments/${id}/stop`),
-  getResults: (id: string) => api.get(`/api/experiments/${id}/results`),
+  getAll: () => api.get('/api/v1/experiments'),
+  getById: (id: string) => api.get(`/api/v1/experiments/${id}`),
+  create: (data: any) => api.post('/api/v1/experiments', data),
+  update: (id: string, data: any) => api.put(`/api/v1/experiments/${id}`, data),
+  delete: (id: string) => api.delete(`/api/v1/experiments/${id}`),
+  start: (id: string) => api.post(`/api/v1/experiments/${id}/start`),
+  pause: (id: string) => api.post(`/api/v1/experiments/${id}/pause`),
+  stop: (id: string) => api.post(`/api/v1/experiments/${id}/stop`),
+  getResults: (id: string) => api.get(`/api/v1/experiments/${id}/results`),
 };
 
 // Analytics APIs
 export const analyticsAPI = {
-  getDashboard: () => api.get('/api/analytics/dashboard'),
+  getDashboard: () => api.get('/api/v1/analytics/dashboard'),
   getRevenue: (startDate: string, endDate: string) => 
-    api.get('/api/analytics/revenue', { params: { startDate, endDate } }),
+    api.get('/api/v1/analytics/revenue', { params: { startDate, endDate } }),
   getPricePerformance: (productId?: string) => 
-    api.get('/api/analytics/price-performance', { params: { productId } }),
-  getExperimentSummary: () => api.get('/api/analytics/experiments'),
+    api.get('/api/v1/analytics/price-performance', { params: { productId } }),
+  getExperimentSummary: () => api.get('/api/v1/analytics/experiments'),
 };
 
 // Utility function to handle API errors
