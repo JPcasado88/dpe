@@ -333,7 +333,7 @@ async def get_experiments():
                 "winner": "too_early",
                 "revenue_lift": "+14.1%",
                 "started_at": "2024-12-20",
-                "ended_at": null
+                "ended_at": None
             }
         ],
         "summary": {
