@@ -9,7 +9,21 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/dpe_db")
 
-engine = create_engine(DATABASE_URL)
+# Railway compatibility - convert postgres:// to postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Add connection pool settings for production
+engine_args = {}
+if "railway.app" in DATABASE_URL or "postgres" in DATABASE_URL:
+    engine_args = {
+        "pool_size": 5,
+        "max_overflow": 10,
+        "pool_pre_ping": True,  # Verify connections before using
+        "pool_recycle": 300,  # Recycle connections after 5 minutes
+    }
+
+engine = create_engine(DATABASE_URL, **engine_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

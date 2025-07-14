@@ -34,7 +34,11 @@ async def lifespan(app: FastAPI):
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database: {str(e)}")
-        raise
+        # Don't crash on Railway if DB init fails - it might already be initialized
+        if os.getenv("RAILWAY_ENVIRONMENT"):
+            logger.warning("Running on Railway, continuing despite DB init error")
+        else:
+            raise
     
     # Initialize Redis connection (if needed)
     # Initialize ML models (if needed)
