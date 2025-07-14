@@ -19,8 +19,8 @@ import numpy as np
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 
-from ..models.database import Product, PriceHistory, Analytics
-from ..config import settings
+from models.database import Product, PriceHistory, Analytics
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class MonitoringService:
             self.db.execute("SELECT 1")
             
             # Check Redis connection (if available)
-            from ..services.cache import cache_service
+            from services.cache import cache_service
             cache_stats = cache_service.get_cache_stats()
             
             if cache_stats.get('status') != 'connected':
@@ -221,7 +221,7 @@ class MonitoringService:
     
     async def monitor_experiments(self):
         """Monitor running experiments for anomalies"""
-        from ..models.database import Experiment
+        from models.database import Experiment
         
         running_experiments = self.db.query(Experiment).filter(
             Experiment.status == 'running'
