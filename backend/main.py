@@ -6,6 +6,10 @@ import logging
 from contextlib import asynccontextmanager
 
 # Import routers
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from api import products, prices, competitors, optimize, experiments, analytics
 from config import settings, FEATURE_FLAGS
 from models.database import init_db
