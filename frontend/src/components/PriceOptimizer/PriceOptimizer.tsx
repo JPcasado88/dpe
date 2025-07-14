@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './PriceOptimizer.css';
+import { productAPI, analyticsAPI } from '../../services/api';
+import { Product } from '../../types';
 
 interface OptimizationSettings {
   strategy: 'competitive' | 'profit' | 'volume' | 'custom';
@@ -8,6 +10,14 @@ interface OptimizationSettings {
   targetMargin: number;
   competitorWeight: number;
   demandElasticity: number;
+}
+
+interface OptimizationResult {
+  productId: string;
+  currentPrice: number;
+  optimalPrice: number;
+  expectedRevenueIncrease: number;
+  confidence: number;
 }
 
 const PriceOptimizer: React.FC = () => {
@@ -19,6 +29,27 @@ const PriceOptimizer: React.FC = () => {
     competitorWeight: 0.5,
     demandElasticity: 1.2,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await productAPI.getAll();
+      setProducts(response.data);
+      // Select first 3 products by default
+      setSelectedProducts(response.data.slice(0, 3).map((p: Product) => p.id));
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('Failed to load products');
+    }
+  };
 
   const handleStrategyChange = (strategy: OptimizationSettings['strategy']) => {
     setSettings({ ...settings, strategy });
@@ -28,9 +59,72 @@ const PriceOptimizer: React.FC = () => {
     setSettings({ ...settings, [key]: value });
   };
 
-  const handleOptimize = () => {
-    console.log('Optimizing with settings:', settings);
-    // Implement optimization logic
+  const handleOptimize = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Optimizing with settings:', settings);
+      
+      // Make API call to optimize prices
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/optimize/recommendations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          product_ids: selectedProducts,
+          strategy: settings.strategy === 'profit' ? 'maximize_profit' : 
+                    settings.strategy === 'volume' ? 'maximize_volume' : 
+                    settings.strategy === 'competitive' ? 'competitive' : 'balanced',
+          constraints: {
+            min_price: settings.minPrice,
+            max_price: settings.maxPrice,
+            min_margin: settings.targetMargin / 100,
+            competitor_weight: settings.competitorWeight,
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setOptimizationResults(data.recommendations || []);
+    } catch (err) {
+      console.error('Optimization error:', err);
+      setError('Failed to optimize prices. Please ensure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSimulateImpact = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Get current analytics data
+      const analyticsResponse = await analyticsAPI.getDashboard();
+      console.log('Analytics data:', analyticsResponse.data);
+      
+      // Simulate impact based on optimization results
+      if (optimizationResults.length > 0) {
+        const totalRevenueIncrease = optimizationResults.reduce(
+          (sum, result) => sum + result.expectedRevenueIncrease, 
+          0
+        );
+        alert(`Simulated Revenue Impact: +${totalRevenueIncrease.toFixed(2)}%`);
+      } else {
+        alert('Please run optimization first to simulate impact');
+      }
+    } catch (err) {
+      console.error('Simulation error:', err);
+      setError('Failed to simulate impact. Please ensure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -130,19 +224,47 @@ const PriceOptimizer: React.FC = () => {
       </div>
 
       <div className="optimizer-actions">
-        <button className="optimize-btn" onClick={handleOptimize}>
-          Run Optimization
+        <button 
+          className="optimize-btn" 
+          onClick={handleOptimize}
+          disabled={loading}
+        >
+          {loading ? 'Optimizing...' : 'Run Optimization'}
         </button>
-        <button className="simulate-btn">
-          Simulate Impact
+        <button 
+          className="simulate-btn"
+          onClick={handleSimulateImpact}
+          disabled={loading}
+        >
+          {loading ? 'Simulating...' : 'Simulate Impact'}
         </button>
       </div>
 
-      <div className="optimizer-section">
-        <h3>Optimization Preview</h3>
-        <div className="preview-message">
-          Configure your optimization settings and click "Run Optimization" to see results.
+      {error && (
+        <div className="error-message" style={{ color: 'red', margin: '10px 0' }}>
+          {error}
         </div>
+      )}
+
+      <div className="optimizer-section">
+        <h3>Optimization Results</h3>
+        {optimizationResults.length > 0 ? (
+          <div className="results-grid">
+            {optimizationResults.map((result) => (
+              <div key={result.productId} className="result-card">
+                <h4>Product {result.productId}</h4>
+                <p>Current Price: ${result.currentPrice.toFixed(2)}</p>
+                <p>Optimal Price: ${result.optimalPrice.toFixed(2)}</p>
+                <p>Revenue Increase: +{result.expectedRevenueIncrease.toFixed(1)}%</p>
+                <p>Confidence: {(result.confidence * 100).toFixed(0)}%</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="preview-message">
+            Configure your optimization settings and click "Run Optimization" to see results.
+          </div>
+        )}
       </div>
     </div>
   );
