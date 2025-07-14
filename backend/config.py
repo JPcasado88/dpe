@@ -13,7 +13,12 @@ class Settings(BaseSettings):
     
     # API settings
     API_PREFIX: str = "/api/v1"
-    CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8080"]
+    CORS_ORIGINS: list = [
+        "http://localhost:3000", 
+        "http://localhost:8080",
+        "https://dpe-fe-production.up.railway.app",
+        "https://*.railway.app"
+    ]
     
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/dpe_db")

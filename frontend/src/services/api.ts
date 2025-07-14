@@ -3,7 +3,9 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 
   (window.location.hostname === 'dpe-fe-production.up.railway.app' 
     ? 'https://web-production-343d.up.railway.app' 
-    : 'http://localhost:8000');
+    : window.location.hostname === 'localhost'
+    ? 'http://localhost:8000'
+    : 'https://web-production-343d.up.railway.app');
 
 console.log('API_BASE_URL:', API_BASE_URL);
 console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);

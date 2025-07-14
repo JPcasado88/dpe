@@ -67,7 +67,11 @@ const PriceOptimizer: React.FC = () => {
       console.log('Optimizing with settings:', settings);
       
       // Make API call to optimize prices
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/optimize/recommendations`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 
+        (window.location.hostname === 'dpe-fe-production.up.railway.app' 
+          ? 'https://web-production-343d.up.railway.app' 
+          : 'http://localhost:8000');
+      const response = await fetch(`${apiUrl}/api/v1/optimize/price-recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +95,16 @@ const PriceOptimizer: React.FC = () => {
       }
 
       const data = await response.json();
-      setOptimizationResults(data.recommendations || []);
+      // Map the response to match our expected format
+      const mappedResults = data.map((item: any) => ({
+        productId: item.product_id,
+        productName: item.product_name,
+        currentPrice: item.current_price,
+        optimalPrice: item.recommended_price,
+        expectedRevenueIncrease: item.expected_revenue_change,
+        confidence: item.confidence_score
+      }));
+      setOptimizationResults(mappedResults);
     } catch (err) {
       console.error('Optimization error:', err);
       setError('Failed to optimize prices. Please ensure the backend is running.');
