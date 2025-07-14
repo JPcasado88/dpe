@@ -5,9 +5,9 @@ from datetime import datetime, date
 from pydantic import BaseModel
 import logging
 
-from ..models.database import get_database_session, Product, PriceHistory as PriceHistoryModel
-from ..services.monitoring import MonitoringService, PriceAnomalyDetector, price_changes_counter
-from ..services.cache import cache_service
+from models.database import get_database_session, Product, PriceHistory as PriceHistoryModel
+from services.monitoring import MonitoringService, PriceAnomalyDetector, price_changes_counter
+from services.cache import cache_service
 
 router = APIRouter(prefix="/prices", tags=["prices"])
 logger = logging.getLogger(__name__)

@@ -10,8 +10,8 @@ from scipy import stats
 import logging
 import uuid
 
-from ..models.database import get_database_session, Experiment, ExperimentProduct, Product, Analytics
-from ..models.schemas import ExperimentCreate, ExperimentStatus, ExperimentType
+from models.database import get_database_session, Experiment, ExperimentProduct, Product, Analytics
+from models.schemas import ExperimentCreate, ExperimentStatus, ExperimentType
 
 router = APIRouter(prefix="/experiments", tags=["experiments"])
 logger = logging.getLogger(__name__)
@@ -363,7 +363,7 @@ async def end_experiment(
                     product.current_price = vp.test_price
                     
                     # Log price change
-                    from ..models.database import PriceHistory
+                    from models.database import PriceHistory
                     price_change = PriceHistory(
                         product_id=product.id,
                         old_price=product.current_price,

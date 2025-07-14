@@ -13,8 +13,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from ml.pricing_optimizer import DynamicPricingEngine, ProductFeatures, OptimizationObjective
-from ..models.database import get_database_session, Product, CompetitorProduct, Analytics, OptimizationJob
-from ..models.schemas import OptimizationRequest, PriceRecommendation, OptimizationResult
+from models.database import get_database_session, Product, CompetitorProduct, Analytics, OptimizationJob
+from models.schemas import OptimizationRequest, PriceRecommendation, OptimizationResult
 
 router = APIRouter(prefix="/optimize", tags=["optimization"])
 logger = logging.getLogger(__name__)

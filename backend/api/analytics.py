@@ -10,9 +10,9 @@ import numpy as np
 from scipy import stats
 import logging
 
-from ..models.database import get_database_session, Product, PriceHistory, CompetitorProduct, Analytics
-from ..models.schemas import ElasticityResponse, CompetitivePositionResponse
-from ..services import cache_service, cached
+from models.database import get_database_session, Product, PriceHistory, CompetitorProduct, Analytics
+from models.schemas import ElasticityResponse, CompetitivePositionResponse
+from services import cache_service, cached
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 logger = logging.getLogger(__name__)
