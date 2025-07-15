@@ -367,7 +367,7 @@ const Dashboard: React.FC = () => {
                         {exp.name}
                       </Typography>
                       <Typography variant="caption" color="textSecondary">
-                        {exp.product_count} products • Started {new Date(exp.start_date).toLocaleDateString()}
+                        Product: {exp.product_id} • Started {new Date(exp.started_at).toLocaleDateString()}
                       </Typography>
                     </Box>
                     <Chip 
