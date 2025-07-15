@@ -96,13 +96,13 @@ const PriceOptimizer: React.FC = () => {
 
       const data = await response.json();
       // Map the response to match our expected format
-      const mappedResults = data.map((item: any) => ({
-        productId: item.product_id,
-        productName: item.product_name,
-        currentPrice: item.current_price,
-        optimalPrice: item.recommended_price,
-        expectedRevenueIncrease: item.expected_revenue_change,
-        confidence: item.confidence_score
+      const mappedResults = data.recommendations.map((item: any) => ({
+        productId: item.productId,
+        productName: item.productName,
+        currentPrice: item.currentPrice,
+        optimalPrice: item.optimalPrice,
+        expectedRevenueIncrease: item.expectedRevenueIncrease,
+        confidence: item.confidence
       }));
       setOptimizationResults(mappedResults);
     } catch (err) {
