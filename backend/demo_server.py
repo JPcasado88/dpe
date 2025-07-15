@@ -116,16 +116,14 @@ async def health_check():
 @app.get("/api/v1/products")
 async def get_products():
     """Get all demo products"""
-    return {
-        "products": [
-            {
-                "id": pid,
-                **details,
-                "margin": ((details["current_price"] - details["cost"]) / details["current_price"] * 100)
-            }
-            for pid, details in DEMO_PRODUCTS.items()
-        ]
-    }
+    return [
+        {
+            "id": pid,
+            **details,
+            "margin": ((details["current_price"] - details["cost"]) / details["current_price"] * 100)
+        }
+        for pid, details in DEMO_PRODUCTS.items()
+    ]
 
 @app.get("/api/v1/products/{product_id}")
 async def get_product(product_id: str):
