@@ -739,39 +739,57 @@ async def get_revenue_analytics(
     endDate: Optional[str] = None
 ):
     """Get revenue analytics for a date range"""
-    # Generate mock revenue data
-    if not startDate:
-        startDate = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
-    if not endDate:
-        endDate = datetime.utcnow().strftime("%Y-%m-%d")
-    
-    start = datetime.fromisoformat(startDate)
-    end = datetime.fromisoformat(endDate)
-    days = (end - start).days + 1
-    
-    data = []
-    for i in range(days):
-        date = start + timedelta(days=i)
-        base_revenue = 40000 + (hash(f"rev{i}") % 20000)
+    try:
+        # Generate mock revenue data
+        if not startDate:
+            startDate = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
+        if not endDate:
+            endDate = datetime.utcnow().strftime("%Y-%m-%d")
         
-        data.append({
-            "date": date.strftime("%Y-%m-%d"),
-            "revenue": base_revenue,
-            "orders": base_revenue // 150,
-            "aov": round(base_revenue / (base_revenue // 150), 2),
-            "optimization_impact": round(base_revenue * 0.08, 2)
-        })
-    
-    return {
-        "period": {"start": startDate, "end": endDate},
-        "data": data,
-        "summary": {
-            "total_revenue": sum(d["revenue"] for d in data),
-            "total_orders": sum(d["orders"] for d in data),
-            "avg_daily_revenue": round(sum(d["revenue"] for d in data) / len(data), 2),
-            "optimization_contribution": sum(d["optimization_impact"] for d in data)
+        # Handle both date formats
+        try:
+            start = datetime.fromisoformat(startDate)
+            end = datetime.fromisoformat(endDate)
+        except:
+            # Try parsing YYYY-MM-DD format
+            start = datetime.strptime(startDate, "%Y-%m-%d")
+            end = datetime.strptime(endDate, "%Y-%m-%d")
+        
+        # Ensure end date is not in the future
+        today = datetime.utcnow()
+        if end > today:
+            end = today
+        if start > today:
+            start = today - timedelta(days=30)
+            
+        days = max(1, (end - start).days + 1)
+        
+        data = []
+        for i in range(days):
+            date = start + timedelta(days=i)
+            base_revenue = 40000 + (hash(f"rev{i}") % 20000)
+            
+            data.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "revenue": base_revenue,
+                "orders": base_revenue // 150,
+                "aov": round(base_revenue / (base_revenue // 150), 2),
+                "optimization_impact": round(base_revenue * 0.08, 2)
+            })
+        
+        return {
+            "period": {"start": start.strftime("%Y-%m-%d"), "end": end.strftime("%Y-%m-%d")},
+            "data": data,
+            "summary": {
+                "total_revenue": sum(d["revenue"] for d in data),
+                "total_orders": sum(d["orders"] for d in data),
+                "avg_daily_revenue": round(sum(d["revenue"] for d in data) / len(data), 2),
+                "optimization_contribution": sum(d["optimization_impact"] for d in data)
+            }
         }
-    }
+    except Exception as e:
+        print(f"Error in revenue analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing revenue analytics: {str(e)}")
 
 @app.get("/api/v1/analytics/price-performance")
 async def get_price_performance(productId: Optional[str] = None):
