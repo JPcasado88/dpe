@@ -42,7 +42,7 @@ async def create_competitor(
     db: Session = Depends(get_db)
 ):
     """Add a new competitor"""
-    return {"message": "Competitor created", "data": competitor.dict()}
+    return {"message": "Competitor created", "data": competitor.model_dump()}
 
 @router.get("/{competitor_id}/products")
 async def get_competitor_products(
@@ -58,7 +58,7 @@ async def match_competitor_product(
     db: Session = Depends(get_db)
 ):
     """Match a competitor's product to our product"""
-    return {"message": "Product matched", "data": match_data.dict()}
+    return {"message": "Product matched", "data": match_data.model_dump()}
 
 @router.get("/analysis/price-comparison")
 async def price_comparison_analysis(

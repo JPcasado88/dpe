@@ -274,7 +274,7 @@ async def calculate_price_elasticity(
         )
         
         # Cache the result
-        cache_service.set_elasticity(product_id, days, result.dict())
+        cache_service.set_elasticity(product_id, days, result.model_dump())
         
         return result
         

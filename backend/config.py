@@ -1,9 +1,7 @@
 import os
 from typing import Optional
-try:
-    from pydantic_settings import BaseSettings
-except ImportError:
-    from pydantic import BaseSettings
+from pydantic import ConfigDict
+from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -82,9 +80,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = os.getenv("SMTP_PASSWORD")
     NOTIFICATION_EMAIL: Optional[str] = os.getenv("NOTIFICATION_EMAIL")
     
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
+    model_config = ConfigDict(
+        case_sensitive=True,
+        env_file=".env"
+    )
 
 # Create settings instance
 settings = Settings()

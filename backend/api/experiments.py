@@ -376,7 +376,7 @@ async def end_experiment(
         # Store final results
         results = await get_experiment_results(experiment_id, db)
         experiment.results = {
-            "final_analysis": results.dict(),
+            "final_analysis": results.model_dump(),
             "variant_adopted": adopt_variant,
             "completed_at": datetime.now().isoformat()
         }

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl, validator
+from pydantic import BaseModel, HttpUrl, ConfigDict
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
 from enum import Enum
@@ -52,8 +52,7 @@ class Product(ProductBase):
     updated_at: datetime
     active: bool
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Price Schemas
 class PriceUpdate(BaseModel):
@@ -71,8 +70,7 @@ class PriceHistoryResponse(BaseModel):
     changed_by: Optional[str] = None
     change_reason: Optional[str] = None
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Competitor Schemas
 class CompetitorBase(BaseModel):
@@ -87,8 +85,7 @@ class Competitor(CompetitorBase):
     id: int
     created_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CompetitorProductCreate(BaseModel):
     competitor_id: int
@@ -100,8 +97,7 @@ class CompetitorProduct(CompetitorProductCreate):
     id: int
     last_checked: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Experiment Schemas
 class ExperimentBase(BaseModel):
@@ -124,8 +120,7 @@ class Experiment(ExperimentBase):
     created_at: datetime
     created_by: Optional[str] = None
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Analytics Schemas
 class AnalyticsRequest(BaseModel):
