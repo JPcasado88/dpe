@@ -138,67 +138,6 @@ async def get_product(product_id: str):
         "margin": ((product["current_price"] - product["cost"]) / product["current_price"] * 100)
     }
 
-@app.post("/api/v1/optimize/{product_id}")
-async def optimize_price(product_id: str, strategy: str = "balanced"):
-    """Optimize price for a product"""
-    if product_id not in DEMO_PRODUCTS:
-        raise HTTPException(status_code=404, detail="Product not found")
-    
-    product = DEMO_PRODUCTS[product_id]
-    
-    # Create product features
-    features = ProductFeatures(
-        product_id=product_id,
-        current_price=product["current_price"],
-        cost=product["cost"],
-        min_price=product["cost"] * 1.2,
-        max_price=product["current_price"] * 1.3,
-        stock_quantity=product["stock"],
-        stock_velocity=5.0,
-        elasticity=product["elasticity"],
-        competitor_avg_price=product["competitor_avg"],
-        competitor_min_price=product["competitor_avg"] * 0.95,
-        market_position=product["current_price"] / product["competitor_avg"],
-        days_since_last_change=7,
-        category=product["category"],
-        seasonality_factor=1.0,
-        conversion_rate=0.03,
-        return_rate=0.05
-    )
-    
-    # Map strategy
-    objective_map = {
-        "revenue": OptimizationObjective.MAXIMIZE_REVENUE,
-        "profit": OptimizationObjective.MAXIMIZE_PROFIT,
-        "balanced": OptimizationObjective.BALANCED
-    }
-    objective = objective_map.get(strategy, OptimizationObjective.BALANCED)
-    
-    # Optimize
-    result = pricing_engine.calculate_optimal_price(
-        features,
-        objective=objective,
-        constraints={
-            'max_change_pct': 0.20,
-            'min_margin': 0.15,
-            'max_above_market': 0.15
-        }
-    )
-    
-    return {
-        "product_id": product_id,
-        "product_name": product["name"],
-        "current_price": result.current_price,
-        "optimal_price": result.optimal_price,
-        "price_change": result.optimal_price - result.current_price,
-        "price_change_pct": ((result.optimal_price - result.current_price) / result.current_price * 100),
-        "expected_revenue_change": result.expected_revenue_change,
-        "expected_profit_change": result.expected_profit_change,
-        "confidence": result.confidence_score * 100,
-        "constraints_applied": result.constraints_applied,
-        "strategy_used": strategy
-    }
-
 @app.post("/api/v1/optimize/price-recommendations")
 async def get_price_recommendations(request_body: dict):
     """Get price recommendations for multiple products"""
@@ -268,6 +207,68 @@ async def get_price_recommendations(request_body: dict):
         "strategy": strategy,
         "totalProducts": len(recommendations),
         "avgRevenueIncrease": sum(r["expectedRevenueIncrease"] for r in recommendations) / len(recommendations) if recommendations else 0
+    }
+
+
+@app.post("/api/v1/optimize/{product_id}")
+async def optimize_price(product_id: str, strategy: str = "balanced"):
+    """Optimize price for a product"""
+    if product_id not in DEMO_PRODUCTS:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    product = DEMO_PRODUCTS[product_id]
+    
+    # Create product features
+    features = ProductFeatures(
+        product_id=product_id,
+        current_price=product["current_price"],
+        cost=product["cost"],
+        min_price=product["cost"] * 1.2,
+        max_price=product["current_price"] * 1.3,
+        stock_quantity=product["stock"],
+        stock_velocity=5.0,
+        elasticity=product["elasticity"],
+        competitor_avg_price=product["competitor_avg"],
+        competitor_min_price=product["competitor_avg"] * 0.95,
+        market_position=product["current_price"] / product["competitor_avg"],
+        days_since_last_change=7,
+        category=product["category"],
+        seasonality_factor=1.0,
+        conversion_rate=0.03,
+        return_rate=0.05
+    )
+    
+    # Map strategy
+    objective_map = {
+        "revenue": OptimizationObjective.MAXIMIZE_REVENUE,
+        "profit": OptimizationObjective.MAXIMIZE_PROFIT,
+        "balanced": OptimizationObjective.BALANCED
+    }
+    objective = objective_map.get(strategy, OptimizationObjective.BALANCED)
+    
+    # Optimize
+    result = pricing_engine.calculate_optimal_price(
+        features,
+        objective=objective,
+        constraints={
+            'max_change_pct': 0.20,
+            'min_margin': 0.15,
+            'max_above_market': 0.15
+        }
+    )
+    
+    return {
+        "product_id": product_id,
+        "product_name": product["name"],
+        "current_price": result.current_price,
+        "optimal_price": result.optimal_price,
+        "price_change": result.optimal_price - result.current_price,
+        "price_change_pct": ((result.optimal_price - result.current_price) / result.current_price * 100),
+        "expected_revenue_change": result.expected_revenue_change,
+        "expected_profit_change": result.expected_profit_change,
+        "confidence": result.confidence_score * 100,
+        "constraints_applied": result.constraints_applied,
+        "strategy_used": strategy
     }
 
 @app.get("/api/v1/demo/impact")
