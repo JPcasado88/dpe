@@ -89,19 +89,19 @@ async def root():
         ],
         "features": {
             "docs": "/docs - Interactive API Documentation",
-            "dashboard": "/api/analytics/dashboard - Executive KPI Dashboard",
-            "products": "/api/products - View Demo Products",
-            "optimize": "/api/optimize/{product_id} - ML Price Optimization",
-            "experiments": "/api/experiments - A/B Testing Results",
-            "elasticity": "/api/analytics/elasticity/{product_id} - Price Elasticity Analysis",
-            "competitors": "/api/competitors/{product_id} - Competitor Intelligence",
-            "impact": "/api/demo/impact - Revenue Impact Summary"
+            "dashboard": "/api/v1/analytics/dashboard - Executive KPI Dashboard",
+            "products": "/api/v1/products - View Demo Products",
+            "optimize": "/api/v1/optimize/{product_id} - ML Price Optimization",
+            "experiments": "/api/v1/experiments - A/B Testing Results",
+            "elasticity": "/api/v1/analytics/elasticity/{product_id} - Price Elasticity Analysis",
+            "competitors": "/api/v1/competitors/{product_id} - Competitor Intelligence",
+            "impact": "/api/v1/demo/impact - Revenue Impact Summary"
         },
         "try_these": [
             "/docs - Best place to start!",
-            "/api/analytics/dashboard - See executive metrics",
-            "/api/experiments - View A/B test results",
-            "/api/demo/impact - See potential revenue lift"
+            "/api/v1/analytics/dashboard - See executive metrics",
+            "/api/v1/experiments - View A/B test results",
+            "/api/v1/demo/impact - See potential revenue lift"
         ]
     }
 
@@ -113,7 +113,7 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat()
     }
 
-@app.get("/api/products")
+@app.get("/api/v1/products")
 async def get_products():
     """Get all demo products"""
     return {
@@ -127,7 +127,7 @@ async def get_products():
         ]
     }
 
-@app.get("/api/products/{product_id}")
+@app.get("/api/v1/products/{product_id}")
 async def get_product(product_id: str):
     """Get specific product details"""
     if product_id not in DEMO_PRODUCTS:
@@ -140,7 +140,7 @@ async def get_product(product_id: str):
         "margin": ((product["current_price"] - product["cost"]) / product["current_price"] * 100)
     }
 
-@app.post("/api/optimize/{product_id}")
+@app.post("/api/v1/optimize/{product_id}")
 async def optimize_price(product_id: str, strategy: str = "balanced"):
     """Optimize price for a product"""
     if product_id not in DEMO_PRODUCTS:
@@ -201,7 +201,7 @@ async def optimize_price(product_id: str, strategy: str = "balanced"):
         "strategy_used": strategy
     }
 
-@app.post("/api/optimize/recommendations")
+@app.post("/api/v1/optimize/price-recommendations")
 async def get_price_recommendations(request_body: dict):
     """Get price recommendations for multiple products"""
     product_ids = request_body.get("product_ids", [])
@@ -272,7 +272,7 @@ async def get_price_recommendations(request_body: dict):
         "avgRevenueIncrease": sum(r["expectedRevenueIncrease"] for r in recommendations) / len(recommendations) if recommendations else 0
     }
 
-@app.get("/api/demo/impact")
+@app.get("/api/v1/demo/impact")
 async def demo_impact():
     """Show potential impact across all products"""
     total_revenue_impact = 0
@@ -333,7 +333,7 @@ async def demo_impact():
         ]
     }
 
-@app.get("/api/demo/simulate")
+@app.get("/api/v1/demo/simulate")
 async def simulate_optimization():
     """Simulate a week of optimizations"""
     results = []
@@ -367,7 +367,7 @@ async def simulate_optimization():
 # In-memory storage for A/B tests
 DEMO_EXPERIMENTS = {}
 
-@app.get("/api/experiments")
+@app.get("/api/v1/experiments")
 async def get_experiments():
     """Get all A/B test experiments"""
     return {
@@ -415,7 +415,7 @@ async def get_experiments():
         }
     }
 
-@app.post("/api/experiments/create")
+@app.post("/api/v1/experiments/create")
 async def create_experiment(
     product_id: str,
     variant_price: float,
@@ -451,7 +451,7 @@ async def create_experiment(
         "estimated_duration": "7-14 days for statistical significance"
     }
 
-@app.get("/api/analytics/dashboard")
+@app.get("/api/v1/analytics/dashboard")
 async def analytics_dashboard():
     """Get executive dashboard metrics"""
     return {
@@ -502,7 +502,7 @@ async def analytics_dashboard():
         }
     }
 
-@app.get("/api/analytics/elasticity/{product_id}")
+@app.get("/api/v1/analytics/elasticity/{product_id}")
 async def get_elasticity_analysis(product_id: str):
     """Get price elasticity analysis for a product"""
     if product_id not in DEMO_PRODUCTS:
@@ -549,7 +549,7 @@ async def get_elasticity_analysis(product_id: str):
         }
     }
 
-@app.get("/api/competitors/{product_id}")
+@app.get("/api/v1/competitors/{product_id}")
 async def get_competitor_analysis(product_id: str):
     """Get competitor pricing analysis"""
     if product_id not in DEMO_PRODUCTS:
