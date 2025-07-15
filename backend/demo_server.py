@@ -490,7 +490,26 @@ async def analytics_dashboard():
                 "current_price": 129.99,
                 "recommended_price": 119.99,
                 "expected_impact": "+8.5% revenue",
+                "expected_revenue_change": 8.5,
                 "reason": "Competitor undercut by 8%"
+            },
+            {
+                "product_id": "DEMO-001",
+                "product_name": "Wireless Gaming Headset",
+                "current_price": 89.99,
+                "recommended_price": 79.99,
+                "expected_impact": "+12.3% revenue",
+                "expected_revenue_change": 12.3,
+                "reason": "High elasticity, price reduction recommended"
+            },
+            {
+                "product_id": "DEMO-002",
+                "product_name": "Premium USB-C Hub",
+                "current_price": 49.99,
+                "recommended_price": 44.99,
+                "expected_impact": "+6.7% revenue",
+                "expected_revenue_change": 6.7,
+                "reason": "Match market average for volume"
             }
         ],
         "system_health": {
