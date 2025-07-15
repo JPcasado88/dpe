@@ -592,6 +592,245 @@ async def get_competitor_analysis(product_id: str):
         ]
     }
 
+# Additional endpoints for frontend compatibility
+@app.get("/api/v1/pricing/history/{product_id}")
+async def get_price_history(product_id: str):
+    """Get price history for a product"""
+    if product_id not in DEMO_PRODUCTS:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Generate mock history
+    history = []
+    current_price = DEMO_PRODUCTS[product_id]["current_price"]
+    
+    for i in range(30, 0, -1):
+        date = datetime.utcnow() - timedelta(days=i)
+        # Simulate price variations
+        price_variation = 1 + (hash(f"{product_id}{i}") % 20 - 10) / 100
+        price = round(current_price * price_variation, 2)
+        
+        history.append({
+            "date": date.isoformat(),
+            "price": price,
+            "revenue": price * (100 + hash(f"{product_id}{i}rev") % 50),
+            "units_sold": 100 + hash(f"{product_id}{i}units") % 50,
+            "margin": round((price - DEMO_PRODUCTS[product_id]["cost"]) / price * 100, 1)
+        })
+    
+    return {
+        "product_id": product_id,
+        "history": history,
+        "summary": {
+            "avg_price": round(sum(h["price"] for h in history) / len(history), 2),
+            "price_volatility": 0.12,
+            "trend": "stable"
+        }
+    }
+
+@app.get("/api/v1/pricing/current")
+async def get_current_prices():
+    """Get current prices for all products"""
+    return {
+        "prices": [
+            {
+                "product_id": pid,
+                "product_name": details["name"],
+                "current_price": details["current_price"],
+                "competitor_avg": details["competitor_avg"],
+                "last_updated": datetime.utcnow().isoformat(),
+                "price_index": round(details["current_price"] / details["competitor_avg"], 2)
+            }
+            for pid, details in DEMO_PRODUCTS.items()
+        ],
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.post("/api/v1/pricing/optimize")
+async def optimize_pricing(data: dict):
+    """Optimize pricing for multiple products (alternative endpoint)"""
+    product_ids = data.get("productIds", [])
+    strategy = data.get("strategy", "balanced")
+    
+    # Redirect to the main optimization endpoint
+    return await get_price_recommendations({
+        "product_ids": product_ids,
+        "strategy": strategy,
+        "constraints": {}
+    })
+
+@app.get("/api/v1/competitors")
+async def get_competitors():
+    """Get all competitors"""
+    return {
+        "competitors": [
+            {"id": "1", "name": "Amazon", "website": "amazon.com", "active": True},
+            {"id": "2", "name": "BestBuy", "website": "bestbuy.com", "active": True},
+            {"id": "3", "name": "Walmart", "website": "walmart.com", "active": True},
+            {"id": "4", "name": "Newegg", "website": "newegg.com", "active": True},
+            {"id": "5", "name": "Target", "website": "target.com", "active": True}
+        ]
+    }
+
+@app.get("/api/v1/competitors/{competitor_id}/prices")
+async def get_competitor_prices(competitor_id: str):
+    """Get competitor prices for all products"""
+    competitor_names = {
+        "1": "Amazon",
+        "2": "BestBuy", 
+        "3": "Walmart",
+        "4": "Newegg",
+        "5": "Target"
+    }
+    
+    if competitor_id not in competitor_names:
+        raise HTTPException(status_code=404, detail="Competitor not found")
+    
+    prices = []
+    for pid, product in DEMO_PRODUCTS.items():
+        # Generate consistent but varied competitor prices
+        base_multiplier = 0.85 + (hash(f"{competitor_id}{pid}") % 30) / 100
+        competitor_price = round(product["competitor_avg"] * base_multiplier, 2)
+        
+        prices.append({
+            "product_id": pid,
+            "product_name": product["name"],
+            "our_price": product["current_price"],
+            "competitor_price": competitor_price,
+            "price_difference": round(product["current_price"] - competitor_price, 2),
+            "price_difference_pct": round((product["current_price"] - competitor_price) / competitor_price * 100, 1),
+            "in_stock": hash(f"{competitor_id}{pid}stock") % 10 > 2,  # 80% in stock
+            "last_updated": datetime.utcnow().isoformat()
+        })
+    
+    return {
+        "competitor_id": competitor_id,
+        "competitor_name": competitor_names[competitor_id],
+        "prices": prices,
+        "summary": {
+            "total_products": len(prices),
+            "we_are_cheaper": sum(1 for p in prices if p["price_difference"] < 0),
+            "they_are_cheaper": sum(1 for p in prices if p["price_difference"] > 0),
+            "average_difference_pct": round(sum(p["price_difference_pct"] for p in prices) / len(prices), 1)
+        }
+    }
+
+@app.get("/api/v1/analytics/revenue")
+async def get_revenue_analytics(
+    startDate: Optional[str] = None,
+    endDate: Optional[str] = None
+):
+    """Get revenue analytics for a date range"""
+    # Generate mock revenue data
+    if not startDate:
+        startDate = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
+    if not endDate:
+        endDate = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    start = datetime.fromisoformat(startDate)
+    end = datetime.fromisoformat(endDate)
+    days = (end - start).days + 1
+    
+    data = []
+    for i in range(days):
+        date = start + timedelta(days=i)
+        base_revenue = 40000 + (hash(f"rev{i}") % 20000)
+        
+        data.append({
+            "date": date.strftime("%Y-%m-%d"),
+            "revenue": base_revenue,
+            "orders": base_revenue // 150,
+            "aov": round(base_revenue / (base_revenue // 150), 2),
+            "optimization_impact": round(base_revenue * 0.08, 2)
+        })
+    
+    return {
+        "period": {"start": startDate, "end": endDate},
+        "data": data,
+        "summary": {
+            "total_revenue": sum(d["revenue"] for d in data),
+            "total_orders": sum(d["orders"] for d in data),
+            "avg_daily_revenue": round(sum(d["revenue"] for d in data) / len(data), 2),
+            "optimization_contribution": sum(d["optimization_impact"] for d in data)
+        }
+    }
+
+@app.get("/api/v1/analytics/price-performance")
+async def get_price_performance(productId: Optional[str] = None):
+    """Get price performance analytics"""
+    if productId and productId not in DEMO_PRODUCTS:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    products = [productId] if productId else list(DEMO_PRODUCTS.keys())
+    performance = []
+    
+    for pid in products:
+        product = DEMO_PRODUCTS[pid]
+        performance.append({
+            "product_id": pid,
+            "product_name": product["name"],
+            "current_price": product["current_price"],
+            "optimal_price": round(product["current_price"] * 0.95, 2),
+            "price_gap": round(product["current_price"] * 0.05, 2),
+            "revenue_opportunity": round(product["current_price"] * product["stock"] * 0.08, 2),
+            "elasticity": product["elasticity"],
+            "recommendation": "Lower price by 5%" if product["current_price"] > product["competitor_avg"] else "Maintain current price"
+        })
+    
+    return {
+        "performance": performance,
+        "summary": {
+            "total_opportunity": sum(p["revenue_opportunity"] for p in performance),
+            "products_above_optimal": sum(1 for p in performance if p["price_gap"] > 0),
+            "avg_price_gap_pct": round(sum(p["price_gap"] / p["current_price"] * 100 for p in performance) / len(performance), 1)
+        }
+    }
+
+@app.get("/api/v1/analytics/experiments")
+async def get_experiments_analytics():
+    """Get analytics for experiments"""
+    return {
+        "experiments": {
+            "total": 12,
+            "active": 2,
+            "completed": 10,
+            "success_rate": 0.75
+        },
+        "revenue_impact": {
+            "total_lift": "$45,000",
+            "avg_lift_per_experiment": "$4,500",
+            "best_performer": {
+                "name": "Gaming Headset Holiday Pricing",
+                "lift": "$12,000"
+            }
+        },
+        "insights": [
+            "Price reductions of 10-15% show highest conversion lift",
+            "Weekend experiments perform 20% better",
+            "Gaming category most responsive to price changes"
+        ]
+    }
+
+# Stub endpoints for operations not supported in demo
+@app.post("/api/v1/products")
+async def create_product(data: dict):
+    """Create product - not supported in demo"""
+    raise HTTPException(status_code=501, detail="Product creation not supported in demo mode")
+
+@app.put("/api/v1/products/{product_id}")
+async def update_product(product_id: str, data: dict):
+    """Update product - not supported in demo"""
+    raise HTTPException(status_code=501, detail="Product updates not supported in demo mode")
+
+@app.delete("/api/v1/products/{product_id}")
+async def delete_product(product_id: str):
+    """Delete product - not supported in demo"""
+    raise HTTPException(status_code=501, detail="Product deletion not supported in demo mode")
+
+@app.patch("/api/v1/products/{product_id}/price")
+async def update_product_price(product_id: str, data: dict):
+    """Update product price - not supported in demo"""
+    raise HTTPException(status_code=501, detail="Price updates not supported in demo mode")
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
