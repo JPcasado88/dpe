@@ -47,7 +47,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import { format, subDays } from 'date-fns';
-import api from '../services/api';
+import { analyticsAPI, productAPI } from '../services/api';
 import './AnalyticsPage.css';
 
 interface MetricData {
@@ -102,32 +102,36 @@ const AnalyticsPage: React.FC = () => {
       const endDate = new Date();
       const startDate = subDays(endDate, dateRange);
       
-      // Fetch metrics data
-      const metricsResponse = await api.post('/analytics/dashboard', {
-        metrics: ['revenue', 'profit', 'volume', 'conversion'],
-        start_date: format(startDate, 'yyyy-MM-dd'),
-        end_date: format(endDate, 'yyyy-MM-dd'),
-        granularity: dateRange > 90 ? 'weekly' : 'daily',
-        categories: selectedCategory !== 'all' ? [selectedCategory] : undefined
-      });
+      // Fetch dashboard data
+      const dashboardResponse = await analyticsAPI.getDashboard();
+      const dashboardData = dashboardResponse.data;
       
-      // Process metrics data
-      if (metricsResponse.data.data_points) {
-        setMetricsData(metricsResponse.data.data_points.map((point: any) => ({
-          date: format(new Date(point.date), 'MMM dd'),
-          revenue: point.metrics.revenue || 0,
-          profit: point.metrics.profit || 0,
-          volume: point.metrics.volume || 0,
-          conversion: (point.metrics.conversion || 0) * 100
-        })));
-        
-        setSummary({
-          totalRevenue: metricsResponse.data.summary.total_revenue || 0,
-          totalProfit: metricsResponse.data.summary.total_profit || 0,
-          avgConversion: (metricsResponse.data.summary.avg_conversion || 0) * 100,
-          optimizationImpact: 12.7 // This would come from the API
-        });
-      }
+      // Fetch revenue analytics for the selected date range
+      const revenueResponse = await analyticsAPI.getRevenue(
+        format(startDate, 'yyyy-MM-dd'),
+        format(endDate, 'yyyy-MM-dd')
+      );
+      
+      // Process revenue data
+      const revenueData = revenueResponse.data.data || [];
+      const processedData = revenueData.map((point: any) => ({
+        date: format(new Date(point.date), 'MMM dd'),
+        revenue: point.revenue || 0,
+        profit: point.revenue * 0.35 || 0, // Assume 35% margin
+        volume: point.orders || 0,
+        conversion: 3.2 // Mock conversion rate
+      }));
+      
+      setMetricsData(processedData);
+      
+      // Set summary from dashboard
+      const kpiSummary = dashboardData.kpi_summary || {};
+      setSummary({
+        totalRevenue: parseFloat(kpiSummary.total_revenue_mtd?.replace(/[$,]/g, '') || '0'),
+        totalProfit: parseFloat(kpiSummary.total_revenue_mtd?.replace(/[$,]/g, '') || '0') * 0.35,
+        avgConversion: 3.2,
+        optimizationImpact: kpiSummary.revenue_increase_pct || 12.7
+      });
       
       // Mock elasticity data (would come from real API)
       const mockElasticityData = [];
@@ -142,20 +146,18 @@ const AnalyticsPage: React.FC = () => {
       }
       setElasticityData(mockElasticityData);
       
-      // Fetch experiments
-      const experimentsResponse = await api.get('/experiments?status=completed');
-      if (experimentsResponse.data) {
-        setExperiments(experimentsResponse.data.slice(0, 5).map((exp: any) => ({
-          id: exp.id,
-          name: exp.name,
-          products: exp.product_count || 0,
-          duration: 14, // Would calculate from dates
-          revenue_impact: Math.random() * 10000 - 2000, // Mock data
-          conversion_change: Math.random() * 2 - 0.5, // Mock data
-          status: exp.status,
-          confidence: 0.95 // Mock data
-        })));
-      }
+      // Use recent wins from dashboard as experiments
+      const recentWins = dashboardData.recent_wins || [];
+      setExperiments(recentWins.slice(0, 5).map((win: any, index: number) => ({
+        id: `EXP-${index + 1}`,
+        name: win.product,
+        products: 1,
+        duration: 14,
+        revenue_impact: parseFloat(win.impact?.replace(/[^0-9.-]/g, '') || '0'),
+        conversion_change: 1.5,
+        status: 'completed',
+        confidence: (win.confidence || 95) / 100
+      })));
       
     } catch (error) {
       console.error('Error fetching analytics:', error);
