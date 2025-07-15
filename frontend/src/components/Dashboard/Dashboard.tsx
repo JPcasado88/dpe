@@ -24,7 +24,7 @@ import {
   ArrowDownward
 } from '@mui/icons-material';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import api from '../../services/api';
+import { analyticsAPI, experimentAPI } from '../../services/api';
 import './Dashboard.css';
 
 interface MetricCardProps {
@@ -110,59 +110,47 @@ const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch KPIs
-      const kpisResponse = await api.get('/analytics/kpis');
-      const kpis = kpisResponse.data.kpis;
-      
       // Fetch dashboard analytics
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 30);
-      
-      const analyticsResponse = await api.post('/analytics/dashboard', {
-        metrics: ['revenue', 'profit', 'volume'],
-        start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0],
-        granularity: 'daily'
-      });
+      const analyticsResponse = await analyticsAPI.getDashboard();
+      const dashboardData = analyticsResponse.data;
       
       // Fetch active experiments
-      const experimentsResponse = await api.get('/experiments?status=running');
+      const experimentsResponse = await experimentAPI.getAll();
+      const activeExperiments = experimentsResponse.data.experiments?.filter(
+        (exp: any) => exp.status === 'running'
+      ) || [];
       
-      // Fetch price recommendations (opportunities)
-      const opportunitiesResponse = await api.post('/optimize/price-recommendations', {
-        strategy: 'maximize_profit',
-        constraints: { max_change_pct: 0.15 }
-      });
+      // Process data from dashboard API
+      const kpiSummary = dashboardData.kpi_summary || {};
       
-      // Fetch cache stats
-      const cacheResponse = await api.get('/cache/stats');
-      
-      // Process data
       setMetrics({
-        totalRevenue: parseFloat(kpis.total_revenue || 0),
-        revenueChange: parseFloat(kpis.price_optimization_impact?.replace('%', '') || 0),
-        activeProducts: analyticsResponse.data.summary?.total_products || 0,
-        activeExperiments: experimentsResponse.data.length || 0,
-        avgOptimizationImpact: parseFloat(kpis.avg_margin || 0) * 100,
-        priceChangesThisMonth: analyticsResponse.data.summary?.price_changes || 0,
-        cacheHitRate: cacheResponse.data.hit_rate || 0
+        totalRevenue: parseFloat(kpiSummary.total_revenue_mtd?.replace(/[$,]/g, '') || 0),
+        revenueChange: kpiSummary.revenue_increase_pct || 0,
+        activeProducts: kpiSummary.products_optimized || 0,
+        activeExperiments: activeExperiments.length,
+        avgOptimizationImpact: kpiSummary.avg_margin || 0,
+        priceChangesThisMonth: kpiSummary.price_changes_mtd || 0,
+        cacheHitRate: parseFloat(dashboardData.system_health?.cache_hit_rate?.replace('%', '') || 0)
       });
       
-      // Set revenue trend data
-      if (analyticsResponse.data.data_points) {
-        setRevenueData(analyticsResponse.data.data_points.map((point: any) => ({
-          date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          revenue: point.metrics.revenue || 0,
-          profit: point.metrics.profit || 0
-        })));
+      // Mock revenue trend data
+      const mockRevenueData = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        mockRevenueData.push({
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          revenue: 40000 + Math.random() * 10000,
+          profit: 14000 + Math.random() * 4000
+        });
       }
+      setRevenueData(mockRevenueData);
       
-      // Set opportunities
-      setOpportunities(opportunitiesResponse.data.slice(0, 5));
+      // Set opportunities from dashboard data
+      setOpportunities(dashboardData.optimization_opportunities || []);
       
       // Set experiments
-      setExperiments(experimentsResponse.data.slice(0, 3));
+      setExperiments(activeExperiments.slice(0, 3));
       
       // Mock category data (would come from real API)
       setCategoryData([
